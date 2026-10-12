@@ -30,7 +30,6 @@ public class ProduitServlet extends HttpServlet {
         produitService = new ProduitService();
     }
 
-    // ==================== GET ====================
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -49,7 +48,6 @@ public class ProduitServlet extends HttpServlet {
         }
     }
 
-    // ==================== POST ====================
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -74,7 +72,6 @@ public class ProduitServlet extends HttpServlet {
 
     private void afficherFormulaireAjout(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-
         request.setAttribute("titrePage", "Ajouter un produit");
         request.getRequestDispatcher("/WEB-INF/views/ajoutProduit.jsp")
                .forward(request, response);
@@ -96,7 +93,6 @@ public class ProduitServlet extends HttpServlet {
             request.setAttribute("messageErreur", "Impossible de charger les produits.");
         }
 
-        // Message flash
         String flash = (String) request.getSession().getAttribute("flashMessage");
         if (flash != null) {
             request.setAttribute("messageSucces", flash);
@@ -113,8 +109,6 @@ public class ProduitServlet extends HttpServlet {
 
         try {
             Long id = Long.parseLong(request.getParameter("id"));
-
-            // ⚠️ ICI : rechercherParId retourne Produit (ou null), PAS Optional
             Produit produit = produitService.rechercherParId(id);
 
             if (produit == null) {
@@ -169,7 +163,6 @@ public class ProduitServlet extends HttpServlet {
         Long id = null;
         try {
             id = Long.parseLong(request.getParameter("id"));
-
             Produit produit = produitService.rechercherParId(id);
 
             if (produit == null) {
@@ -197,13 +190,10 @@ public class ProduitServlet extends HttpServlet {
             request.setAttribute("messageErreur", "Impossible de modifier le produit.");
         }
 
-        // En cas d'erreur, on réaffiche le formulaire avec les valeurs actuelles
         try {
             if (id != null) {
                 Produit produit = produitService.rechercherParId(id);
-                if (produit != null) {
-                    request.setAttribute("produit", produit);
-                }
+                if (produit != null) request.setAttribute("produit", produit);
             }
         } catch (SQLException ignored) { }
 
@@ -218,7 +208,6 @@ public class ProduitServlet extends HttpServlet {
         try {
             Long id = Long.parseLong(request.getParameter("id"));
             produitService.supprimerProduit(id);
-
             request.getSession().setAttribute("flashMessage", "Le produit a bien été supprimé.");
         } catch (NumberFormatException e) {
             request.getSession().setAttribute("flashMessage", "Identifiant invalide.");
@@ -233,17 +222,13 @@ public class ProduitServlet extends HttpServlet {
         response.sendRedirect(request.getContextPath() + "/produits/recherche");
     }
 
-    // ==================== HELPERS ====================
-
     private double parseDouble(String valeur, String champ) throws IllegalArgumentException {
         if (valeur == null || valeur.trim().isEmpty()) {
             throw new IllegalArgumentException("Le " + champ + " est obligatoire.");
         }
         try {
             double resultat = Double.parseDouble(valeur.trim());
-            if (resultat < 0) {
-                throw new IllegalArgumentException("Le " + champ + " doit être positif.");
-            }
+            if (resultat < 0) throw new IllegalArgumentException("Le " + champ + " doit être positif.");
             return resultat;
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException("Le " + champ + " est invalide.");
@@ -256,9 +241,7 @@ public class ProduitServlet extends HttpServlet {
         }
         try {
             int resultat = Integer.parseInt(valeur.trim());
-            if (resultat < 0) {
-                throw new IllegalArgumentException("Le " + champ + " doit être positif.");
-            }
+            if (resultat < 0) throw new IllegalArgumentException("Le " + champ + " doit être positif.");
             return resultat;
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException("Le " + champ + " est invalide.");
