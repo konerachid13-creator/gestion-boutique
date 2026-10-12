@@ -1,4 +1,3 @@
-
 package com.gestionboutique.controller;
 
 import com.gestionboutique.model.Produit;
@@ -15,7 +14,6 @@ import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 @WebServlet(urlPatterns = {
         "/produits/ajouter",
@@ -74,7 +72,6 @@ public class ProduitServlet extends HttpServlet {
 
     // ==================== ACTIONS ====================
 
-    /** Affiche le formulaire d'ajout. */
     private void afficherFormulaireAjout(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
@@ -83,7 +80,6 @@ public class ProduitServlet extends HttpServlet {
                .forward(request, response);
     }
 
-    /** Affiche la liste / recherche des produits. */
     private void afficherRecherche(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
@@ -100,7 +96,7 @@ public class ProduitServlet extends HttpServlet {
             request.setAttribute("messageErreur", "Impossible de charger les produits.");
         }
 
-        // Message flash (après ajout / modif / suppression)
+        // Message flash
         String flash = (String) request.getSession().getAttribute("flashMessage");
         if (flash != null) {
             request.setAttribute("messageSucces", flash);
@@ -112,21 +108,22 @@ public class ProduitServlet extends HttpServlet {
                .forward(request, response);
     }
 
-    /** Affiche le formulaire de modification. */
     private void afficherFormulaireModification(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
         try {
             Long id = Long.parseLong(request.getParameter("id"));
-            Optional<Produit> opt = produitService.rechercherParId(id);
 
-            if (opt.isEmpty()) {
+            // ⚠️ ICI : rechercherParId retourne Produit (ou null), PAS Optional
+            Produit produit = produitService.rechercherParId(id);
+
+            if (produit == null) {
                 request.getSession().setAttribute("flashMessage", "Produit introuvable.");
                 response.sendRedirect(request.getContextPath() + "/produits/recherche");
                 return;
             }
 
-            request.setAttribute("produit", opt.get());
+            request.setAttribute("produit", produit);
             request.setAttribute("titrePage", "Modifier un produit");
             request.getRequestDispatcher("/WEB-INF/views/modifierProduit.jsp")
                    .forward(request, response);
@@ -137,7 +134,6 @@ public class ProduitServlet extends HttpServlet {
         }
     }
 
-    /** Enregistre un nouveau produit. */
     private void enregistrerProduit(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
@@ -162,13 +158,11 @@ public class ProduitServlet extends HttpServlet {
             request.setAttribute("messageErreur", "Impossible d'enregistrer le produit.");
         }
 
-        // En cas d'erreur, on réaffiche le formulaire
         request.setAttribute("titrePage", "Ajouter un produit");
         request.getRequestDispatcher("/WEB-INF/views/ajoutProduit.jsp")
                .forward(request, response);
     }
 
-    /** Modifie un produit existant. */
     private void modifierProduit(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
@@ -176,14 +170,14 @@ public class ProduitServlet extends HttpServlet {
         try {
             id = Long.parseLong(request.getParameter("id"));
 
-            Optional<Produit> opt = produitService.rechercherParId(id);
-            if (opt.isEmpty()) {
+            Produit produit = produitService.rechercherParId(id);
+
+            if (produit == null) {
                 request.getSession().setAttribute("flashMessage", "Produit introuvable.");
                 response.sendRedirect(request.getContextPath() + "/produits/recherche");
                 return;
             }
 
-            Produit produit = opt.get();
             produit.setNom(request.getParameter("nom"));
             produit.setPrixAchat(BigDecimal.valueOf(parseDouble(request.getParameter("prixAchat"), "prix d'achat")));
             produit.setPrixVente(BigDecimal.valueOf(parseDouble(request.getParameter("prixVente"), "prix de vente")));
@@ -206,7 +200,10 @@ public class ProduitServlet extends HttpServlet {
         // En cas d'erreur, on réaffiche le formulaire avec les valeurs actuelles
         try {
             if (id != null) {
-                produitService.rechercherParId(id).ifPresent(p -> request.setAttribute("produit", p));
+                Produit produit = produitService.rechercherParId(id);
+                if (produit != null) {
+                    request.setAttribute("produit", produit);
+                }
             }
         } catch (SQLException ignored) { }
 
@@ -215,7 +212,6 @@ public class ProduitServlet extends HttpServlet {
                .forward(request, response);
     }
 
-    /** Supprime un produit. */
     private void supprimerProduit(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
